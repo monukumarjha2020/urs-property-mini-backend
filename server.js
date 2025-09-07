@@ -9,12 +9,27 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 
-app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
+// ✅ Handle multiple origins (comma-separated in .env)
+const allowedOrigins = CORS_ORIGIN.split(',').map(o => o.trim());
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(morgan('dev'));
 
 // Routes
-app.get('/', (req, res) => res.send('URS Property API is running'));
+app.get('/', (req, res) => res.send('URS Property API is running 🚀'));
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/properties', require('./src/routes/properties'));
 
